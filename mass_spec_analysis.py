@@ -38,7 +38,7 @@ def denormalize(dfin, col):
     return df
 
 def phosphoParser():
-	phospho = pd.read_csv("Phospho (STY)Sites.txt", sep = '\t', low_memory = False)
+	phospho = pandas.read_csv("Phospho (STY)Sites.txt", sep = '\t', low_memory = False)
 	deleteCol = []
 	for i in range(len(phospho.columns)):
 		if "UbP" in phospho.columns[i]:
@@ -49,7 +49,7 @@ def phosphoParser():
 	return phospho
 
 def proteinParser():
-	protein = pd.read_csv("proteinGroups.txt", sep = '\t', low_memory = False)
+	protein = pandas.read_csv("proteinGroups.txt", sep = '\t', low_memory = False)
 	deleteCol = []
 	for i in range(len(protein.columns)):
 		if "UbP" in protein.columns[i]:
@@ -155,4 +155,6 @@ def makeScatterPlot(proteinGroupsDataFrame):
     plt.show()
   
   
-makeScatterPlot(proteinGroupsDataFrame)
+#makeScatterPlot(proteinGroupsDataFrame)
+
+intensity()
