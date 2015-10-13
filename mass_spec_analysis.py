@@ -75,21 +75,22 @@ def intensity():
 				colIntensities.append(file.columns[i])
 				numIntensities += 1
 	for i in range(numIntensities):
-		if 'Ub' in colIntensities[i]:
+		if 'Ub' in colIntensities[i] \
+		and "UbP" not in colIntensities[i]:
 			file[colIntensities[i]] /= file[ctrlIntensities[0]]
+		if 'UbP' in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[1]]
 		if "WCL" in colIntensities[i] \
 		and "WCLP" not in colIntensities[i]:
-			file[colIntensities[i]] /= file[ctrlIntensities[1]]
-		if "WCLP"in colIntensities[i]:
 			file[colIntensities[i]] /= file[ctrlIntensities[2]]
-	
+		if "WCLP"in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[3]]
 	whangee = []
 	for i in range(numIntensities):
 		if 'Whangee' in colIntensities[i]:
 			whangee.append(colIntensities[i])
-
 	Xuniques, X = np.unique(file['Protein IDs'], return_inverse=True)
-	f, ax = plt.subplots(3,4)
+	f, ax = plt.subplots(4,4)
 	ax[0, 0].plot(X, file[whangee[0]], 'b.')
 	ax[0, 0].set_title('Normalized' + whangee[0])
 	ax[0, 1].plot(X, file_unNorm[whangee[0]], 'b.')
@@ -105,23 +106,34 @@ def intensity():
 	ax[2, 1].plot(X, file_unNorm[whangee[2]], 'r.')
 	ax[2, 1].set_title(whangee[2])
 	
-	ax[0, 2].plot(X, file[whangee[3]], 'b.')
-	ax[0, 2].set_title('Normalized' + whangee[3])
-	ax[0, 3].plot(X, file_unNorm[whangee[3]], 'b.')
-	ax[0, 3].set_title(whangee[3])
+	ax[3, 0].plot(X, file[whangee[3]], 'm.')
+	ax[3, 0].set_title('Normalized' + whangee[3])
+	ax[3, 1].plot(X, file_unNorm[whangee[3]], 'm.')
+	ax[3, 1].set_title(whangee[3])
 	
-	ax[1, 2].plot(X, file[whangee[4]], 'c.')
-	ax[1, 2].set_title('Normalized' + whangee[4])
-	ax[1, 3].plot(X, file_unNorm[whangee[4]], 'c.')
-	ax[1, 3].set_title(whangee[4])
+	ax[0, 2].plot(X, file[whangee[4]], 'b.')
+	ax[0, 2].set_title('Normalized' + whangee[4])
+	ax[0, 3].plot(X, file_unNorm[whangee[4]], 'b.')
+	ax[0, 3].set_title(whangee[4])
 	
-	ax[2, 2].plot(X, file[whangee[5]], 'r.')
-	ax[2, 2].set_title('Normalized' + whangee[5])
-	ax[2, 3].plot(X, file_unNorm[whangee[5]], 'r.')
-	ax[2, 3].set_title(whangee[5])
+	ax[1, 2].plot(X, file[whangee[5]], 'c.')
+	ax[1, 2].set_title('Normalized' + whangee[5])
+	ax[1, 3].plot(X, file_unNorm[whangee[5]], 'c.')
+	ax[1, 3].set_title(whangee[5])
+	
+	ax[2, 2].plot(X, file[whangee[6]], 'r.')
+	ax[2, 2].set_title('Normalized' + whangee[6])
+	ax[2, 3].plot(X, file_unNorm[whangee[6]], 'r.')
+	ax[2, 3].set_title(whangee[6])
+	
+	ax[3, 2].plot(X, file[whangee[7]], 'm.')
+	ax[3, 2].set_title('Normalized' + whangee[7])
+	ax[3, 3].plot(X, file_unNorm[whangee[7]], 'm.')
+	ax[3, 3].set_title(whangee[7])
 	
 	plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 	plt.show()
+	return file
 
 def makeScatterPlot(proteinGroupsDataFrame):
     #makes scatter plot of Control vs TPK1 ko... 
