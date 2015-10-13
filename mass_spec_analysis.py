@@ -37,6 +37,92 @@ def denormalize(dfin, col):
     df = df.append(new_entries)
     return df
 
+def phosphoParser():
+	phospho = pd.read_csv("Phospho (STY)Sites.txt", sep = '\t', low_memory = False)
+	deleteCol = []
+	for i in range(len(phospho.columns)):
+		if "UbP" in phospho.columns[i]:
+			deleteCol.append(i)
+	phospho = phospho.drop(phospho.columns[deleteCol], axis = 1)
+	phospho = phospho[phospho['Reverse'] != '+']
+	phospho = phospho[phospho['Potential contaminant'] != '+']
+	return phospho
+
+def proteinParser():
+	protein = pd.read_csv("proteinGroups.txt", sep = '\t', low_memory = False)
+	deleteCol = []
+	for i in range(len(protein.columns)):
+		if "UbP" in protein.columns[i]:
+			deleteCol.append(i)
+	protein = protein.drop(protein.columns[deleteCol], axis = 1)
+	protein = protein[protein['Reverse'] != '+']
+	protein = protein[protein['Potential contaminant'] != '+']
+	return protein
+
+def intensity():
+	file = proteinParser()
+	file_unNorm = proteinParser()
+	sum_col = file.sum(0)
+	numIntensities = 0
+	colIntensities = []
+	ctrlIntensities = []
+	for i in range(len(file.columns)):
+		if "Intensity" in file.columns[i]:
+			file[file.columns[i]] /= sum_col[i]
+			if "Control" in file.columns[i]:
+				ctrlIntensities.append(file.columns[i])
+			else:
+				colIntensities.append(file.columns[i])
+				numIntensities += 1
+	for i in range(numIntensities):
+		if 'Ub' in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[0]]
+		if "WCL" in colIntensities[i] \
+		and "WCLP" not in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[1]]
+		if "WCLP"in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[2]]
+	
+	whangee = []
+	for i in range(numIntensities):
+		if 'Whangee' in colIntensities[i]:
+			whangee.append(colIntensities[i])
+
+	Xuniques, X = np.unique(file['Protein IDs'], return_inverse=True)
+	f, ax = plt.subplots(3,4)
+	ax[0, 0].plot(X, file[whangee[0]], 'b.')
+	ax[0, 0].set_title('Normalized' + whangee[0])
+	ax[0, 1].plot(X, file_unNorm[whangee[0]], 'b.')
+	ax[0, 1].set_title(whangee[0])
+	
+	ax[1, 0].plot(X, file[whangee[1]], 'c.')
+	ax[1, 0].set_title('Normalized' + whangee[1])
+	ax[1, 1].plot(X, file_unNorm[whangee[1]], 'c.')
+	ax[1, 1].set_title(whangee[1])
+	
+	ax[2, 0].plot(X, file[whangee[2]], 'r.')
+	ax[2, 0].set_title('Normalized' + whangee[2])
+	ax[2, 1].plot(X, file_unNorm[whangee[2]], 'r.')
+	ax[2, 1].set_title(whangee[2])
+	
+	ax[0, 2].plot(X, file[whangee[3]], 'b.')
+	ax[0, 2].set_title('Normalized' + whangee[3])
+	ax[0, 3].plot(X, file_unNorm[whangee[3]], 'b.')
+	ax[0, 3].set_title(whangee[3])
+	
+	ax[1, 2].plot(X, file[whangee[4]], 'c.')
+	ax[1, 2].set_title('Normalized' + whangee[4])
+	ax[1, 3].plot(X, file_unNorm[whangee[4]], 'c.')
+	ax[1, 3].set_title(whangee[4])
+	
+	ax[2, 2].plot(X, file[whangee[5]], 'r.')
+	ax[2, 2].set_title('Normalized' + whangee[5])
+	ax[2, 3].plot(X, file_unNorm[whangee[5]], 'r.')
+	ax[2, 3].set_title(whangee[5])
+	
+	plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+	plt.show()
+
 def makeScatterPlot(proteinGroupsDataFrame):
     #makes scatter plot of Control vs TPK1 ko... 
     intensityList = ['Intensity Control_Ub', 'Intensity Control_UbP', 'Intensity Control_WCL', 'Intensity Control_WCLP', 'Intensity Whangee_Tpk1KO_Ub', 'Intensity Whangee_Tpk1KO_UbP', 'Intensity Whangee_Tpk1KO_WCL', 'Intensity Whangee_Tpk1KO_WCLP', 'Intensity Whangee_tunicamycin_Ub', 'Intensity Whangee_tunicamycin_UbP', 'Intensity Whangee_tunicamycin_WCL', 'Intensity Whangee_tunicamycin_WCLP']
