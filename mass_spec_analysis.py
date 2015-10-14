@@ -6,10 +6,12 @@ import matplotlib.pyplot as plt
 import urllib2
 import collections
 
+
 evidenceDataFrame = pandas.DataFrame.from_csv('evidence.txt', sep='\t')
 proteinGroupsDataFrame = pandas.DataFrame.from_csv('proteinGroups.txt', sep='\t')
 PhosphoSTYsitesDataFrame = pandas.DataFrame.from_csv('Phospho(STY)Sites.txt', sep='\t')
 peptideDataFrame = pandas.DataFrame.from_csv('peptides.txt', sep='\t')
+sgdid_to_go = pic.load(open("SGDID_to_go.pkl", "rb"))
 
 def updateDF(DataFrame, stringKey, stringValue):
     DataFrame = DataFrame[DataFrame[stringKey] != stringValue]
@@ -153,7 +155,25 @@ def makeScatterPlot(proteinGroupsDataFrame):
     axarr[3, 0].plot(intenseDict['Intensity Control_Ub'], intenseDict['Intensity Whangee_tunicamycin_Ub'], 'r.')
     axarr[3, 1].plot(intenseDict['Intensity Control_UbP'], intenseDict['Intensity Whangee_tunicamycin_UbP'], 'm.')
     plt.show()
-  
+
+def getGo(sgdid_to_go, proteinGroupsDataFrame):
+    """Add go ids to DataFrame
+    """
+    fastaList = list(proteinGroupsDataFrame['Fasta headers'])
+    sgdidList = []
+    for header in fastaList:
+        sgdid = ("".join(re.findall(r'SGDID:S[0-9]*', header))).split(':')
+        if len(sgdid)>1:
+            sgdidList.append(sgdid[1])
+        else:
+            sgdidList.append(0)
+    golist = []
+    for sgdid in sgdidList:
+        if sgdid_to_go[sgdid]:
+            golist.append("|".join(sgdid_to_go[sgdid]))
+        else:
+            golist.append(0)
+    proteinGroupsDataFrame['goid'] = golist
   
 #makeScatterPlot(proteinGroupsDataFrame)
 
