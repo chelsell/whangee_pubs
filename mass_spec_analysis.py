@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import urllib2
 import collections
+import scipy.stats as st
+import os
 
 
 evidenceDataFrame = pandas.DataFrame.from_csv('evidence.txt', sep='\t')
@@ -12,6 +14,7 @@ proteinGroupsDataFrame = pandas.DataFrame.from_csv('proteinGroups.txt', sep='\t'
 PhosphoSTYsitesDataFrame = pandas.DataFrame.from_csv('Phospho(STY)Sites.txt', sep='\t')
 peptideDataFrame = pandas.DataFrame.from_csv('peptides.txt', sep='\t')
 sgdid_to_go = pic.load(open("SGDID_to_go.pkl", "rb"))
+go_to_SGDID = pic.load(open("go_to_SGDID.pkl", "rb"))
 
 def updateDF(DataFrame, stringKey, stringValue):
     DataFrame = DataFrame[DataFrame[stringKey] != stringValue]
@@ -156,7 +159,121 @@ def makeScatterPlot(proteinGroupsDataFrame):
     axarr[3, 1].plot(intenseDict['Intensity Control_UbP'], intenseDict['Intensity Whangee_tunicamycin_UbP'], 'm.')
     plt.show()
 
-def getGo(sgdid_to_go, proteinGroupsDataFrame):
+def calculate_enrichment(intensityStringName, proteinGroupsDataFrame, go_to_SGDID,sgdidList, n=100):
+
+    intensityList = list(proteinGroupsDataFrame[intensityStringName])
+    gene_data = []
+    for index in xrange(0,len(intensityList)):
+        gene_data.append((sgdidList[index],intensityList[index]))
+
+    # first, sort the gene data by expression value, from top to bottom
+    gene_list = sorted(gene_data, key=lambda g: g[1], reverse=True)
+
+    # gene_set1 is a set of the N highest-expressing genes
+    gene_set1 = set(g for g,v in gene_list[:n])
+
+    # gene_set2 is a set of the N lowest-expressing genes
+    gene_set2 = set(g for g,v in gene_list[-n:])
+
+    # dictionaries that map from goid -> -log p-value
+    e_scores = dict() # positive-enrichment scores
+    ne_scores = dict() # negative-enrichment scores
+
+    # for each goid in the go_to_genes dictionary...
+    for go in go_to_SGDID:
+        # convert the list of genes into a set
+        goset = set(go_to_SGDID[go])
+
+        # The function's interface is st.hypergeom.logsf(x, M, n, N),
+        # and it returns ln(p-value) so I convert to log10.
+
+        # I'm using set intersection to figure out how big x is.
+        # I substract one because the sf calculates "more than x"
+        # and I want "x or more" (e.g. "more than x-1")
+        e_scores[go] = -(st.hypergeom.logsf(len(goset & gene_set1) - 1,
+                                            len(gene_list),
+                                            len(goset),
+                                            len(gene_set1)) / np.log(10))
+
+        # I do the same thing for the negative enrichment, just using the
+        # genes from the bottom of the list this time
+        ne_scores[go] = -(st.hypergeom.logsf(len(goset & gene_set2) - 1,
+                                             len(gene_list),
+                                             len(goset),
+                                             len(gene_set2)) / np.log(10))
+
+
+    # I convert the dictionaries into lists by sorting them by their scores.
+    e_scores = sorted(((go,e_scores[go]) for go in e_scores),
+                      key=lambda (go,s): s, reverse=True)
+    ne_scores = sorted(((go,ne_scores[go]) for go in ne_scores),
+                       key=lambda (go,s): s, reverse=True)
+    #print e_scores, ne_scores
+    return e_scores,ne_scores
+
+
+def checkGoLengths(control, test):
+    #print len(e0), len(e1)
+    gocontrol = []
+    for e in control:
+        gocontrol.append(e[0])
+    gotest = []
+    for e in test:
+        gotest.append(e[0])
+    controlnottest = list(set(gocontrol)-set(gotest))
+    for e in controlnottest:
+        test.append((e, -0.0))
+    testnotcontrol = list(set(gotest)-set(gocontrol))
+    for e in testnotcontrol:
+        control.append((e,-0.0))
+    maxlist = [control[0][1], test[0][1]]
+    test_scores = []
+    goIDlist = []
+    for t in sorted(test, key=lambda g: g[0], reverse=True):
+        test_scores.append(t[1])
+        goIDlist.append(t[0])
+    control_scores = []
+    for c in sorted(control, key=lambda g: g[0], reverse=True):
+        control_scores.append(c[1])
+    return test_scores, control_scores, goIDlist, maxlist
+
+
+
+def printEnrichment(controlVsTestTupleList, proteinGroupsDataFrame, go_to_SGDID,sgdidList):
+    f, axarr = plt.subplots(4, 2)
+    f.subplots_adjust(hspace = 0.75)
+    i = 0
+    j = 0
+    font ={'family':'normal', 'weight':'bold', 'size':8}
+    plt.rc('font', **font)
+
+    for (control, test) in controlVsTestTupleList:
+        e1, n1 = calculate_enrichment(test, proteinGroupsDataFrame, go_to_SGDID,sgdidList)
+        e0, n0 = calculate_enrichment(control, proteinGroupsDataFrame, go_to_SGDID,sgdidList)
+        e0list, e1list, egoidlist, emaxlist = checkGoLengths(e0, e1)
+        n0list, n1list, ngoidlist, nmaxlist = checkGoLengths(n0, n1)
+        maxlist = [emaxlist[0], emaxlist[1], nmaxlist[0], nmaxlist[1]]
+        axarr[i, j].plot(e0list, e1list, 'b.')
+        axarr[i, j].plot(n0list, n1list, 'r.')
+        axarr[i, j].set_title(control +'vs'+ test, fontsize=8)
+        axarr[i, j].set_xlabel('control')
+        axarr[i, j].set_ylabel('test') 
+        axarr[i, j].set_xlim([0, max(maxlist)])
+        axarr[i, j].set_ylim([0, max(maxlist)])
+        """index = 0
+        #to add all go ids to plot
+        for xy in zip(e0list, e1list):                                               
+            axarr[i, j].annotate('%s' % egoidlist[index], xy=xy, textcoords='data')
+        index+=1"""
+        if j == 1:
+            i+=1
+            j=0
+        else:
+            j+=1
+    plt.show()
+
+
+def getGo(sgdid_to_go, proteinGroupsDataFrame, go_to_SGDID, controlVsTestTupleList):
     """Add go ids to DataFrame
     """
     fastaList = list(proteinGroupsDataFrame['Fasta headers'])
@@ -174,6 +291,7 @@ def getGo(sgdid_to_go, proteinGroupsDataFrame):
         else:
             golist.append(0)
     proteinGroupsDataFrame['goid'] = golist
+    printEnrichment(controlVsTestTupleList, proteinGroupsDataFrame, go_to_SGDID,sgdidList)
   
 #makeScatterPlot(proteinGroupsDataFrame)
 
