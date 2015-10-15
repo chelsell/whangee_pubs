@@ -65,15 +65,15 @@ def proteinParser():
 	return protein
 
 def intensity():
-	file = proteinParser()
-	file_unNorm = proteinParser()
+	file = proteinGroupsDataFrame
+	file_unNorm = proteinGroupsDataFrame
 	sum_col = file.sum(0)
 	numIntensities = 0
 	colIntensities = []
 	ctrlIntensities = []
 	for i in range(len(file.columns)):
 		if "Intensity" in file.columns[i]:
-			file[file.columns[i]] /= sum_col[i]
+			file[file.columns[i]] /= sum_col[file.columns[i]]
 			if "Control" in file.columns[i]:
 				ctrlIntensities.append(file.columns[i])
 			else:
@@ -94,7 +94,7 @@ def intensity():
 	for i in range(numIntensities):
 		if 'Whangee' in colIntensities[i]:
 			whangee.append(colIntensities[i])
-	Xuniques, X = np.unique(file['Protein IDs'], return_inverse=True)
+	Xuniques, X = np.unique(file['Peptide IDs'], return_inverse=True)
 	f, ax = plt.subplots(4,4)
 	ax[0, 0].plot(X, file[whangee[0]], 'b.')
 	ax[0, 0].set_title('Normalized' + whangee[0])
@@ -139,6 +139,145 @@ def intensity():
 	plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 	plt.show()
 	return file
+	
+def logFoldHis():
+	file = intensity()
+	whangee = []
+	for i in range(len(file.columns)):
+		if 'Whangee' in file.columns[i] \
+		and 'Intensity' in file.columns[i]:
+			file[file.columns[i]] = np.log2(file[file.columns[i]])
+			whangee.append(file.columns[i])
+
+	df = pandas.DataFrame({'a': file[whangee[0]], 'b': file[whangee[1]], 'c': file[whangee[2]], \
+	'd': file[whangee[3]], 'e': file[whangee[4]], 'f': file[whangee[5]], \
+	'g': file[whangee[6]], 'h': file[whangee[7]]})
+	
+	pandas.set_option('mode.use_inf_as_null', True)
+	
+	f, ax = plt.subplots(2,4)
+	
+	ax[0,0].hist(list(df.a.dropna()), bins = 30, color = 'b')
+	ax[0, 0].set_title(whangee[0], fontsize = 12)
+	
+	ax[0, 1].hist(list(df.b.dropna()), bins = 30, color = 'c')
+	ax[0, 1].set_title(whangee[1], fontsize = 12)
+	
+	ax[0, 2].hist(list(df.c.dropna()), bins = 30, color = 'r')
+	ax[0, 2].set_title(whangee[2], fontsize = 12)
+	
+	ax[0, 3].hist(list(df.d.dropna()), bins = 30, color = 'm')
+	ax[0, 3].set_title(whangee[3], fontsize = 12)
+	
+	ax[1, 0].hist(list(df.e.dropna()), bins = 30, color = 'b')
+	ax[1, 0].set_title(whangee[4], fontsize = 12)
+	
+	ax[1, 1].hist(list(df.f.dropna()), bins = 30, color = 'c')
+	ax[1, 1].set_title(whangee[5], fontsize = 12)
+	
+	ax[1, 2].hist(list(df.g.dropna()), bins = 30, color = 'r')
+	ax[1, 2].set_title(whangee[6], fontsize = 12)
+	
+	ax[1, 3].hist(list(df.h.dropna()), bins = 30, color = 'm')
+	ax[1, 3].set_title(whangee[7], fontsize = 12)
+	plt.show()
+
+def phosphoIntensity():
+	file = PhosphoSTYsitesDataFrame
+	sum_col = file.sum(0)
+	numIntensities = 0
+	colIntensities = []
+	ctrlIntensities = []
+	for i in range(len(file.columns)):
+		if "Intensity" in file.columns[i] \
+		and "__" not in file.columns[i]:
+			file[file.columns[i]] /= sum_col[file.columns[i]]
+			if "Control" in file.columns[i]:
+				ctrlIntensities.append(file.columns[i])
+			else:
+				colIntensities.append(file.columns[i])
+				numIntensities += 1
+	for i in range(numIntensities):
+		if 'Ub' in colIntensities[i] \
+		and "UbP" not in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[0]]
+		if 'UbP' in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[1]]
+		if "WCL" in colIntensities[i] \
+		and "WCLP" not in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[2]]
+		if "WCLP"in colIntensities[i]:
+			file[colIntensities[i]] /= file[ctrlIntensities[3]]
+	whangee = []
+	for i in range(numIntensities):
+		if 'Whangee' in colIntensities[i]:
+			whangee.append(colIntensities[i])
+	Xuniques, X = np.unique(file['id'], return_inverse=True)
+	f, ax = plt.subplots(2,4)
+	ax[0, 0].plot(X, file[whangee[0]], 'b.')
+	ax[0, 0].set_title('Normalized' + whangee[0])
+	
+	ax[0, 1].plot(X, file[whangee[1]], 'c.')
+	ax[0, 1].set_title('Normalized' + whangee[1])
+	
+	ax[0, 2].plot(X, file[whangee[2]], 'r.')
+	ax[0, 2].set_title('Normalized' + whangee[2])
+	
+	ax[0, 3].plot(X, file[whangee[3]], 'm.')
+	ax[0, 3].set_title('Normalized' + whangee[3])
+	
+	ax[1, 0].plot(X, file[whangee[4]], 'b.')
+	ax[1, 0].set_title('Normalized' + whangee[4])
+	
+	ax[1, 1].plot(X, file[whangee[5]], 'c.')
+	ax[1, 1].set_title('Normalized' + whangee[5])
+	
+	ax[1, 2].plot(X, file[whangee[6]], 'r.')
+	ax[1, 2].set_title('Normalized' + whangee[6])
+	
+	ax[1, 3].plot(X, file[whangee[7]], 'm.')
+	ax[1, 3].set_title('Normalized' + whangee[7])
+	return file
+
+def phosphoLogFoldHis():
+	file = phosphoIntensity()
+	whangee = []
+	for i in range(len(file.columns)):
+		if 'Whangee' in file.columns[i]:
+			if 'Intensity' in file.columns[i] and '__' not in file.columns[i]:
+				file[file.columns[i]] = np.log2(file[file.columns[i]])
+				whangee.append(file.columns[i])
+	df = pandas.DataFrame({'a': file[whangee[0]], 'b': file[whangee[1]], 'c': file[whangee[2]], \
+	'd': file[whangee[3]], 'e': file[whangee[4]], 'f': file[whangee[5]], \
+	'g': file[whangee[6]], 'h': file[whangee[7]]})
+	
+	pandas.set_option('mode.use_inf_as_null', True)
+	f, ax = plt.subplots(2,4)
+
+	ax[0,0].hist(list(df.a.dropna()), color = 'b')
+	ax[0, 0].set_title(whangee[0], fontsize = 12)
+	
+	ax[0, 1].hist(list(df.b.dropna()), color = 'c')
+	ax[0, 1].set_title(whangee[1], fontsize = 12)
+	
+	ax[0, 2].hist(list(df.c.dropna()), color = 'r')
+	ax[0, 2].set_title(whangee[2], fontsize = 12)
+	
+	ax[0, 3].hist(list(df.d.dropna()), color = 'm')
+	ax[0, 3].set_title(whangee[3], fontsize = 12)
+	
+	ax[1, 0].hist(list(df.e.dropna()), color = 'b')
+	ax[1, 0].set_title(whangee[4], fontsize = 12)
+	
+	ax[1, 1].hist(list(df.f.dropna()), color = 'c')
+	ax[1, 1].set_title(whangee[5], fontsize = 12)
+	
+	ax[1, 2].hist(list(df.g.dropna()), color = 'r')
+	ax[1, 2].set_title(whangee[6], fontsize = 12)
+	
+	ax[1, 3].hist(list(df.h.dropna()), color = 'm')
+	ax[1, 3].set_title(whangee[7], fontsize = 12)
+	plt.show()
 
 def makeScatterPlot(proteinGroupsDataFrame):
     #makes scatter plot of Control vs TPK1 ko... 
