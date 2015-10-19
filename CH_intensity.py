@@ -74,7 +74,7 @@ plt.legend()
 plt.title('TPK1 KO')
 plt.show()
 
-
+#Adds protein IDs to the dataframes
 ubp_foldch['names'] = names
 ubp_foldch.set_index(names, inplace=True)
 
@@ -87,8 +87,54 @@ wcl_foldch.set_index(names, inplace=True)
 wclp_foldch['names'] = names
 wclp_foldch.set_index(names, inplace=True)
 
-
+#writes CSV files with Protein IDs sorted by fold change
 idx = ubp_foldch[ubp_foldch.columns[-2]]
 with pd.option_context('mode.use_inf_as_null', True):
     idx = idx.dropna()
-print idx[idx.argsort()]
+obj = idx[idx.argsort()]
+obj.to_csv('./ubp_tuni_proteinID_fold-change_rank.csv', sep = '\t')
+
+idx = ub_foldch[ub_foldch.columns[-2]]
+with pd.option_context('mode.use_inf_as_null', True):
+    idx = idx.dropna()
+obj = idx[idx.argsort()]
+obj.to_csv('./ub_tuni_proteinID_fold-change_rank.csv', sep = '\t')
+
+
+idx = wcl_foldch[wcl_foldch.columns[-2]]
+with pd.option_context('mode.use_inf_as_null', True):
+    idx = idx.dropna()
+obj = idx[idx.argsort()]
+obj.to_csv('./wcl_tuni_proteinID_fold-change_rank.csv', sep = '\t')
+
+
+idx = wclp_foldch[wclp_foldch.columns[-2]]
+with pd.option_context('mode.use_inf_as_null', True):
+    idx = idx.dropna()
+obj = idx[idx.argsort()]
+obj.to_csv('./wclp_tuni_proteinID_fold-change_rank.csv', sep = '\t')
+
+idx = ubp_foldch[ubp_foldch.columns[-3]]
+with pd.option_context('mode.use_inf_as_null', True):
+    idx = idx.dropna()
+obj = idx[idx.argsort()]
+obj.to_csv('./ubp_tpk1_proteinID_fold-change_rank.csv', sep = '\t')
+
+idx = ub_foldch[ub_foldch.columns[-3]]
+with pd.option_context('mode.use_inf_as_null', True):
+    idx = idx.dropna()
+obj = idx[idx.argsort()]
+obj.to_csv('./ub_tpk1_proteinID_fold-change_rank.csv', sep = '\t')
+
+
+idx = wcl_foldch[wcl_foldch.columns[-3]]
+with pd.option_context('mode.use_inf_as_null', True):
+    idx = idx.dropna()
+obj = idx[idx.argsort()]
+obj.to_csv('./wcl_tpk1_proteinID_fold-change_rank.csv', sep = '\t')
+
+idx = wclp_foldch[wclp_foldch.columns[-3]]
+with pd.option_context('mode.use_inf_as_null', True):
+    idx = idx.dropna()
+obj = idx[idx.argsort()]
+obj.to_csv('./wclp_tpk1_proteinID_fold-change_rank.csv', sep = '\t')
